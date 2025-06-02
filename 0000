@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EGY MY WIRE</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ff0000;
+            --primary-light: #ff6666;
+            --primary-dark: #cc0000;
+            --text-color: #333;
+            --bg-color: #f9f9f9;
+        }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        
+        .navbar {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .balance-container {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        
+        .service-btn {
+            background-color: white;
+            color: var(--text-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+            text-decoration: none;
+        }
+        
+        .service-btn:hover {
+            background-color: var(--primary-light);
+            transform: translateY(-3px);
+            color: white;
+        }
+        
+        .service-btn i {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        .service-btn:hover i {
+            color: white;
+        }
+        
+        .notification-panel {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            z-index: 50;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .notification-panel.active {
+            transform: translateY(0);
+        }
+        
+        .notification-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .notification-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .notification-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #f2f2f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .notification-icon i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+        }
+        
+        .spinner {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Transfer Modal Styles */
+        .transfer-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            z-index: 60;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .transfer-modal.active {
+            transform: translateY(0);
+        }
+
+        .transfer-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .transfer-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-input.error {
+            border-color: #e53e3e;
+        }
+
+        .error-message {
+            color: #e53e3e;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .transfer-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .transfer-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .transfer-btn:disabled {
+            background-color: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 70;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #f2f2f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+
+        .modal-icon i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .modal-close-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 640px) {
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navbar -->
+    <nav class="navbar flex justify-between items-center sticky top-0 z-10">
+        <div class="text-xl font-bold">EGY MY WIRE</div>
+        <div class="flex items-center">
+            <a href="https://accounegy.netlify.app/" class="p-2 mr-2">
+                <i class="fas fa-user-circle text-xl"></i>
+            </a>
+            <button id="notificationBtn" class="p-2 relative">
+                <i class="fas fa-bell text-xl"></i>
+                <span class="absolute top-0 right-0 bg-yellow-400 text-xs w-4 h-4 rounded-full flex items-center justify-center">0</span>
+            </button>
+        </div>
+    </nav>
+    
+    <!-- Notification Panel -->
+    <div id="notificationPanel" class="notification-panel">
+        <div class="notification-header">
+            <h2 class="text-xl font-bold">الإشعارات</h2>
+            <button id="closeNotifications" class="text-white">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="notification-content">
+            <div class="notification-icon">
+                <i class="fas fa-bell-slash"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">لا توجد إشعارات</h3>
+            <p class="text-gray-500 text-center">ليس لديك أي إشعارات جديدة في الوقت الحالي. سنعلمك عندما يصل شيء جديد.</p>
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div id="transferModal" class="transfer-modal">
+        <div class="transfer-header">
+            <h2 class="text-xl font-bold">تحويل رصيد</h2>
+            <button id="closeTransfer" class="text-white">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="transfer-content">
+            <form id="transferForm">
+                <div class="form-group">
+                    <label class="form-label">رقم الحساب</label>
+                    <input type="text" id="accountNumber" class="form-input" placeholder="أدخل رقم الحساب (8 أرقام)" maxlength="8">
+                    <div id="accountError" class="error-message" style="display: none;">يجب أن يتكون رقم الحساب من 8 أرقام</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">المبلغ (جنيه)</label>
+                    <input type="number" id="amount" class="form-input" placeholder="أدخل المبلغ (10 - 20000)" min="10" max="20000">
+                    <div id="amountError" class="error-message" style="display: none;">المبلغ يجب أن يكون بين 10 و 20000 جنيه</div>
+                </div>
+                <button type="submit" class="transfer-btn">تحويل</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <i id="modalIcon" class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 id="modalTitle" class="text-lg font-bold mb-2">تنبيه</h3>
+            <p id="modalMessage" class="text-gray-600 mb-4">رسالة</p>
+            <button id="modalCloseBtn" class="modal-close-btn">موافق</button>
+        </div>
+    </div>
+    
+    <div class="container mx-auto px-4 py-6">
+        <!-- Promotional Banner -->
+        <div class="mb-6 overflow-hidden rounded-lg shadow-md">
+            <img id="promoBanner" src="https://i.postimg.cc/J4fC7J42/image.jpg" alt="Promotional Banner" class="w-full h-auto">
+        </div>
+        
+        <!-- Balance Container -->
+        <div class="balance-container mb-6 flex justify-between items-center">
+            <div>
+                <p class="text-sm opacity-80">رصيدك الحالي</p>
+                <h2 class="text-2xl font-bold">0.00 جنيه</h2>
+            </div>
+            <button id="refreshBalance" class="bg-white bg-opacity-20 p-2 rounded-full">
+                <i class="fas fa-sync-alt"></i>
+                <div class="spinner" id="balanceSpinner"></div>
+            </button>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-4 gap-4 mb-6 quick-actions">
+            <a href="https://qregy.netlify.app/" class="service-btn">
+                <i class="fas fa-qrcode"></i>
+                <span class="text-xs mt-1">QR SCAN</span>
+            </a>
+            <button id="transferBtn" class="service-btn">
+                <i class="fas fa-exchange-alt"></i>
+                <span class="text-xs mt-1">تحويل</span>
+            </button>
+            <button id="statisticsBtn" class="service-btn">
+                <i class="fas fa-chart-bar"></i>
+                <span class="text-xs mt-1">إحصائيات</span>
+            </button>
+            <button id="depositsBtn" class="service-btn">
+                <i class="fas fa-money-bill-wave"></i>
+                <span class="text-xs mt-1">الإيداعات</span>
+            </button>
+        </div>
+        
+        <!-- Recent Transactions -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <h3 class="text-lg font-bold mb-3">آخر المعاملات</h3>
+            <div class="text-center py-4">
+                <i class="fas fa-receipt text-3xl text-gray-300 mb-2"></i>
+                <p class="text-gray-500 text-sm">لا توجد معاملات حديثة</p>
+            </div>
+        </div>
+        
+        <!-- Services Grid -->
+        <h3 class="text-lg font-bold mb-3">الخدمات</h3>
+        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-6">
+            <a href="https://voluble-profiterole-9603f0.netlify.app/" class="service-btn">
+                <i class="fas fa-mobile-alt"></i>
+                <span class="text-xs mt-1">شحن الموبيل</span>
+            </a>
+            <a href="https://s7n.netlify.app/" class="service-btn">
+                <i class="fas fa-credit-card"></i>
+                <span class="text-xs mt-1">كروت الشحن</span>
+            </a>
+            <a href="https://fakaegy.netlify.app/" class="service-btn">
+                <i class="fas fa-coins"></i>
+                <span class="text-xs mt-1">شحن الفكة</span>
+            </a>
+            <a href="https://renewalpackages.netlify.app/" class="service-btn">
+                <i class="fas fa-sync"></i>
+                <span class="text-xs mt-1">تجديد الباقة</span>
+            </a>
+            <a href="https://renewalpackages.netlify.app/" class="service-btn">
+                <i class="fas fa-file-invoice"></i>
+                <span class="text-xs mt-1">فواتير الموبيل</span>
+            </a>
+            <a href="https://internetegy.netlify.app/" class="service-btn">
+                <i class="fas fa-wifi"></i>
+                <span class="text-xs mt-1">الإنترنت والأرضي</span>
+            </a>
+            <a href="https://m7afz.netlify.app/" class="service-btn">
+                <i class="fas fa-wallet"></i>
+                <span class="text-xs mt-1">شحن المحافظ</span>
+            </a>
+            <a href="#education" class="service-btn">
+                <i class="fas fa-graduation-cap"></i>
+                <span class="text-xs mt-1">التعليم</span>
+            </a>
+            <a href="https://mraf3.netlify.app/" class="service-btn">
+                <i class="fas fa-bolt"></i>
+                <span class="text-xs mt-1">المرافق العامة</span>
+            </a>
+            <a href="#insurance" class="service-btn">
+                <i class="fas fa-shield-alt"></i>
+                <span class="text-xs mt-1">خدمات التأمين</span>
+            </a>
+            <a href="#travel" class="service-btn">
+                <i class="fas fa-plane"></i>
+                <span class="text-xs mt-1">نقل وسياحة</span>
+            </a>
+            <a href="#financial" class="service-btn">
+                <i class="fas fa-money-check-alt"></i>
+                <span class="text-xs mt-1">معاملات مالية</span>
+            </a>
+            <a href="#online" class="service-btn">
+                <i class="fas fa-globe"></i>
+                <span class="text-xs mt-1">الأون لاين</span>
+            </a>
+            <a href="#subscriptions" class="service-btn">
+                <i class="fas fa-hand-holding-heart"></i>
+                <span class="text-xs mt-1">اشتراكات وتبرعات</span>
+            </a>
+            <a href="#loans" class="service-btn">
+                <i class="fas fa-percentage"></i>
+                <span class="text-xs mt-1">أقساط وقروض</span>
+            </a>
+            <a href="#government" class="service-btn">
+                <i class="fas fa-landmark"></i>
+                <span class="text-xs mt-1">خدمات حكومية</span>
+            </a>
+            <a href="#misc-services" class="service-btn">
+                <i class="fas fa-ellipsis-h"></i>
+                <span class="text-xs mt-1">خدمات متنوعة</span>
+            </a>
+            <a href="#merchant" class="service-btn">
+                <i class="fas fa-store"></i>
+                <span class="text-xs mt-1">خدمات التاجر</span>
+            </a>
+            <a href="#request-machine" class="service-btn">
+                <i class="fas fa-calculator"></i>
+                <span class="text-xs mt-1">طلب ماكينة</span>
+            </a>
+            <a href="#recharge-machine" class="service-btn">
+                <i class="fas fa-hand-holding-usd"></i>
+                <span class="text-xs mt-1">شحن ماكينة</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Notification Panel Toggle
+        const notificationBtn = document.getElementById('notificationBtn');
+        const notificationPanel = document.getElementById('notificationPanel');
+        const closeNotifications = document.getElementById('closeNotifications');
+        
+        notificationBtn.addEventListener('click', () => {
+            notificationPanel.classList.add('active');
+        });
+        
+        closeNotifications.addEventListener('click', () => {
+            notificationPanel.classList.remove('active');
+        });
+        
+        // Balance Refresh Animation
+        const refreshBalance = document.getElementById('refreshBalance');
+        const balanceSpinner = document.getElementById('balanceSpinner');
+        
+        refreshBalance.addEventListener('click', () => {
+            const icon = refreshBalance.querySelector('i');
+            icon.style.display = 'none';
+            balanceSpinner.style.display = 'block';
+            
+            setTimeout(() => {
+                balanceSpinner.style.display = 'none';
+                icon.style.display = 'block';
+            }, 1500);
+        });
+
+        // Transfer Modal
+        const transferBtn = document.getElementById('transferBtn');
+        const transferModal = document.getElementById('transferModal');
+        const closeTransfer = document.getElementById('closeTransfer');
+        const transferForm = document.getElementById('transferForm');
+        const accountNumber = document.getElementById('accountNumber');
+        const amount = document.getElementById('amount');
+        const accountError = document.getElementById('accountError');
+        const amountError = document.getElementById('amountError');
+
+        transferBtn.addEventListener('click', () => {
+            transferModal.classList.add('active');
+        });
+
+        closeTransfer.addEventListener('click', () => {
+            transferModal.classList.remove('active');
+            resetForm();
+        });
+
+        // Form validation
+        accountNumber.addEventListener('input', () => {
+            const value = accountNumber.value.replace(/\D/g, '');
+            accountNumber.value = value;
+            
+            if (value.length === 8) {
+                accountNumber.classList.remove('error');
+                accountError.style.display = 'none';
+            } else {
+                accountNumber.classList.add('error');
+                accountError.style.display = 'block';
+            }
+        });
+
+        amount.addEventListener('input', () => {
+            const value = parseInt(amount.value);
+            
+            if (value >= 10 && value <= 20000) {
+                amount.classList.remove('error');
+                amountError.style.display = 'none';
+            } else {
+                amount.classList.add('error');
+                amountError.style.display = 'block';
+            }
+        });
+
+        transferForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const accountValue = accountNumber.value;
+            const amountValue = parseInt(amount.value);
+            
+            if (accountValue.length === 8 && amountValue >= 10 && amountValue <= 20000) {
+                showModal('exclamation-triangle', 'تنبيه', 'لا يوجد رصيد كافي');
+            }
+        });
+
+        function resetForm() {
+            transferForm.reset();
+            accountNumber.classList.remove('error');
+            amount.classList.remove('error');
+            accountError.style.display = 'none';
+            amountError.style.display = 'none';
+        }
+
+        // Modal functions
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalIcon = document.getElementById('modalIcon');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+        function showModal(icon, title, message) {
+            modalIcon.className = `fas fa-${icon}`;
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalOverlay.classList.add('active');
+        }
+
+        modalCloseBtn.addEventListener('click', () => {
+            modalOverlay.classList.remove('active');
+        });
+
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                modalOverlay.classList.remove('active');
+            }
+        });
+
+        // Statistics and Deposits buttons
+        const statisticsBtn = document.getElementById('statisticsBtn');
+        const depositsBtn = document.getElementById('depositsBtn');
+
+        statisticsBtn.addEventListener('click', () => {
+            showModal('chart-bar', 'الإحصائيات', 'لا توجد معاملات لعرض الإحصائيات');
+        });
+
+        depositsBtn.addEventListener('click', () => {
+            showModal('money-bill-wave', 'الإيداعات', 'لا توجد معاملات إيداع');
+        });
+        
+        // Function to change promo banner
+        function changePromoBanner(url) {
+            document.getElementById('promoBanner').src = url;
+        }
+    </script>
+</body>
+</html>
