@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مثال على استخدام شريط التنقل التلقائي</title>
+    <!-- أي CSS موجود مسبقاً -->
+</head>
+<body>
+    <!-- محتوى الصفحة الأصلي -->
+    <div class="content">
+    </div>
+
+    <!-- الكود الذي تحتاج لصقه في أي صفحة - ابدأ من هنا -->
+    <script>
+        // إزالة أي شريط تنقل موجود
+        function removeExistingNavbars() {
+            const existingNavbars = document.querySelectorAll('nav, .navbar, header nav, .navigation, .nav-bar');
+            existingNavbars.forEach(navbar => {
+                navbar.remove();
+            });
+        }
+
+        // إضافة CSS للشريط الجديد
+        function injectNavbarStyles() {
+            const style = document.createElement('style');
+            style.textContent = `
+                :root {
+                    --primary-color: #ff0000;
+                    --primary-light: #ff6666;
+                    --primary-dark: #cc0000;
+                    --text-color: #333;
+                    --bg-color: #f9f9f9;
+                }
+
+                body {
+                    font-family: 'Tajawal', sans-serif;
+                    margin: 0;
+                }
+
+                .egy-navbar {
+                    background-color: var(--primary-color);
+                    color: white;
+                    padding: 0.75rem;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                }
+
+                .egy-notification-panel {
+                    position: fixed;
+                    bottom: 0;
+                    right: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: white;
+                    z-index: 50;
+                    transform: translateY(100%);
+                    transition: transform 0.3s ease;
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .egy-notification-panel.active {
+                    transform: translateY(0);
+                }
+
+                .egy-notification-header {
+                    background-color: var(--primary-color);
+                    color: white;
+                    padding: 1rem;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+
+                .egy-notification-content {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2rem;
+                }
+
+                .egy-notification-icon {
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 50%;
+                    background-color: #f2f2f2;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 1rem;
+                }
+
+                .egy-notification-icon i {
+                    font-size: 2.5rem;
+                    color: var(--primary-color);
+                }
+
+                .egy-nav-btn {
+                    background: none;
+                    border: none;
+                    color: white;
+                    padding: 0.375rem;
+                    margin-right: 0.375rem;
+                    cursor: pointer;
+                    border-radius: 4px;
+                    transition: background-color 0.3s;
+                    position: relative;
+                }
+
+                .egy-nav-btn:hover {
+                    background-color: rgba(255,255,255,0.1);
+                }
+
+                .egy-notification-badge {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    background-color: #fbbf24;
+                    color: #000;
+                    font-size: 0.75rem;
+                    width: 1rem;
+                    height: 1rem;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // إضافة Font Awesome و Google Fonts
+        function loadExternalResources() {
+            // Font Awesome
+            if (!document.querySelector('link[href*="font-awesome"]')) {
+                const fontAwesome = document.createElement('link');
+                fontAwesome.rel = 'stylesheet';
+                fontAwesome.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css';
+                document.head.appendChild(fontAwesome);
+            }
+
+            // Google Fonts - Tajawal
+            if (!document.querySelector('link[href*="Tajawal"]')) {
+                const googleFonts = document.createElement('link');
+                googleFonts.rel = 'stylesheet';
+                googleFonts.href = 'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap';
+                document.head.appendChild(googleFonts);
+            }
+        }
+
+        // إنشاء شريط التنقل الجديد
+        function createNavbar() {
+            const navbar = document.createElement('nav');
+            navbar.className = 'egy-navbar';
+            navbar.innerHTML = `
+                <div style="font-size: 1.125rem; font-weight: bold;">EGY MY WIRE</div>
+                <div style="display: flex; align-items: center;">
+                    <a href="https://accounegy.netlify.app/" class="egy-nav-btn" aria-label="الحساب الشخصي">
+                        <i class="fas fa-user-circle" style="font-size: 1.125rem;"></i>
+                    </a>
+                    <button id="egyNotificationBtn" class="egy-nav-btn" aria-label="الإشعارات">
+                        <i class="fas fa-bell" style="font-size: 1.125rem;"></i>
+                        <span class="egy-notification-badge">0</span>
+                    </button>
+                </div>
+            `;
+            return navbar;
+        }
+
+        // إنشاء لوحة الإشعارات
+        function createNotificationPanel() {
+            const panel = document.createElement('div');
+            panel.id = 'egyNotificationPanel';
+            panel.className = 'egy-notification-panel';
+            panel.innerHTML = `
+                <div class="egy-notification-header">
+                    <h2 style="font-size: 1.25rem; font-weight: bold; margin: 0;">الإشعارات</h2>
+                    <button id="egyCloseNotifications" style="background: none; border: none; color: white; cursor: pointer;" aria-label="إغلاق الإشعارات">
+                        <i class="fas fa-times" style="font-size: 1.25rem;"></i>
+                    </button>
+                </div>
+                <div class="egy-notification-content">
+                    <div class="egy-notification-icon">
+                        <i class="fas fa-bell-slash"></i>
+                    </div>
+                    <h3 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 0.5rem;">لا توجد إشعارات</h3>
+                    <p style="color: #6b7280; text-align: center;">ليس لديك أي إشعارات جديدة في الوقت الحالي. سنعلمك عندما يصل شيء جديد.</p>
+                </div>
+            `;
+            return panel;
+        }
+
+        // إضافة وظائف التفاعل
+        function addEventListeners() {
+            const notificationBtn = document.getElementById('egyNotificationBtn');
+            const notificationPanel = document.getElementById('egyNotificationPanel');
+            const closeNotifications = document.getElementById('egyCloseNotifications');
+
+            if (notificationBtn && notificationPanel && closeNotifications) {
+                notificationBtn.addEventListener('click', () => {
+                    notificationPanel.classList.add('active');
+                });
+
+                closeNotifications.addEventListener('click', () => {
+                    notificationPanel.classList.remove('active');
+                });
+
+                // إغلاق اللوحة عند النقر خارجها
+                notificationPanel.addEventListener('click', (e) => {
+                    if (e.target === notificationPanel) {
+                        notificationPanel.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        // التشغيل الرئيسي
+        function initEgyNavbar() {
+            // إزالة شريط التنقل القديم
+            removeExistingNavbars();
+            
+            // تحميل الموارد الخارجية
+            loadExternalResources();
+            
+            // إضافة CSS
+            injectNavbarStyles();
+            
+            // إنشاء وإضافة شريط التنقل الجديد
+            const navbar = createNavbar();
+            document.body.insertBefore(navbar, document.body.firstChild);
+            
+            // إنشاء وإضافة لوحة الإشعارات
+            const notificationPanel = createNotificationPanel();
+            document.body.appendChild(notificationPanel);
+            
+            // إضافة وظائف التفاعل
+            setTimeout(addEventListeners, 100);
+        }
+
+        // تشغيل الكود عند تحميل الصفحة
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initEgyNavbar);
+        } else {
+            initEgyNavbar();
+        }
+    </script>
+    <!-- انتهاء الكود - انسخ حتى هنا -->
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حسابي - EGY MY WIRE</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ff0000;
+            --primary-light: #ff6666;
+            --primary-dark: #cc0000;
+            --text-color: #333;
+            --bg-color: #f9f9f9;
+        }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        
+        .navbar {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            background-color: white;
+        }
+        
+        .section-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1rem;
+            font-weight: bold;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .action-btn {
+            background-color: white;
+            color: var(--text-color);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .action-btn:hover {
+            background-color: var(--primary-light);
+            color: white;
+            transform: translateY(-3px);
+        }
+        
+        .action-btn i {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        .action-btn:hover i {
+            color: white;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: modalFadeIn 0.3s ease;
+        }
+        
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .modal-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: #f2f2f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .modal-icon i {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+        
+        .modal-footer {
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            border-top: 1px solid #eee;
+        }
+        
+        .notification-panel {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            z-index: 50;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .notification-panel.active {
+            transform: translateY(0);
+        }
+        
+        .notification-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .notification-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .notification-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #f2f2f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .notification-icon i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navbar -->
+    <nav class="navbar flex justify-between items-center sticky top-0 z-10">
+        <div class="text-xl font-bold">EGY MY WIRE</div>
+        <div class="flex items-center">
+            <a href="https://homeegy.netlify.app/" class="p-2 mr-2">
+                <i class="fas fa-home text-xl"></i>
+            </a>
+            <button id="notificationBtn" class="p-2 relative">
+                <i class="fas fa-bell text-xl"></i>
+                <span class="absolute top-0 right-0 bg-yellow-400 text-xs w-4 h-4 rounded-full flex items-center justify-center">0</span>
+            </button>
+        </div>
+    </nav>
+    
+    <!-- Notification Panel -->
+    <div id="notificationPanel" class="notification-panel">
+        <div class="notification-header">
+            <h2 class="text-xl font-bold">الإشعارات</h2>
+            <button id="closeNotifications" class="text-white">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="notification-content">
+            <div class="notification-icon">
+                <i class="fas fa-bell-slash"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">لا توجد إشعارات</h3>
+            <p class="text-gray-500 text-center">ليس لديك أي إشعارات جديدة في الوقت الحالي. سنعلمك عندما يصل شيء جديد.</p>
+        </div>
+    </div>
+    
+    <div class="container mx-auto px-4 py-6">
+        <!-- Account Information -->
+        <div class="card mb-6">
+            <div class="section-header">
+                معلومات الحساب
+            </div>
+            <div class="p-0">
+                <div class="info-row">
+                    <span class="font-medium">الكود:</span>
+                    <span id="userCode">859874</span>
+                </div>
+                <div class="info-row">
+                    <span class="font-medium">نوع الحساب:</span>
+                    <span>حساب تاجر</span>
+                </div>
+                <div class="info-row">
+                    <span class="font-medium">اصدار:</span>
+                    <span>v10.06.08</span>
+                </div>
+                <div class="info-row">
+                    <span class="font-medium">السيريال:</span>
+                    <span id="serialNumber">**********</span>
+                </div>
+                <div class="info-row">
+                    <span class="font-medium">الرصيد:</span>
+                    <span>00.00 جنيه</span>
+                </div>
+                <div class="info-row">
+                    <span class="font-medium">آجل شركة:</span>
+                    <span>00.00 جنيه</span>
+                </div>
+                <div class="info-row">
+                    <span class="font-medium">أجل وكيل:</span>
+                    <span>00.00 جنيه</span>
+                </div>
+                <div class="info-row">
+                    <span class="font-medium">المحل:</span>
+                    <span>--</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Account Statistics -->
+        <div class="card mb-6">
+            <div class="section-header">
+                إحصائيات الحساب
+            </div>
+            <div class="p-0">
+                <div class="info-row">
+                    <span class="font-medium">عمليات معلقة:</span>
+                    <span>0</span>
+                </div>
+                <div class="info-row">
+                    <span class="font-medium">عمليات مرفوضة:</span>
+                    <span>0</span>
+                </div>
+                <div class="info-row">
+                    <span class="font-medium">رصيد معلق:</span>
+                    <span>0 جنيه</span>
+                </div>
+                <div class="info-row">
+                    <span class="font-medium">رصيد مرتجع:</span>
+                    <span>0 جنيه</span>
+                </div>
+                <div class="info-row">
+                    <span class="font-medium">عملاء الشجرة:</span>
+                    <span>0</span>
+                </div>
+                <div class="info-row">
+                    <span class="font-medium">طلبات:</span>
+                    <span>0</span>
+                </div>
+                <div class="info-row">
+                    <span class="font-medium">بلاغات:</span>
+                    <span>0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <h3 class="text-lg font-bold mb-3">الإجراءات</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
+            <button class="action-btn" id="transactionsBtn">
+                <i class="fas fa-exchange-alt"></i>
+                <span>المعاملات</span>
+            </button>
+            <button class="action-btn" id="statisticsBtn">
+                <i class="fas fa-chart-pie"></i>
+                <span>الإحصائيات</span>
+            </button>
+            <button class="action-btn" id="myTreeBtn">
+                <i class="fas fa-sitemap"></i>
+                <span>شجرتي</span>
+            </button>
+            <button class="action-btn" id="advanceMeBtn">
+                <i class="fas fa-hand-holding-usd"></i>
+                <span>سلفني</span>
+            </button>
+            <button class="action-btn" id="depositsBtn">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>الإيداعات</span>
+            </button>
+            <button class="action-btn" id="myMachineBtn">
+                <i class="fas fa-credit-card"></i>
+                <span>ماكينتي</span>
+            </button>
+            <button class="action-btn" id="supportBtn">
+                <i class="fas fa-headset"></i>
+                <span>الدعم الفني</span>
+            </button>
+            <a href="https://egymywire.com/commissions" class="action-btn">
+                <i class="fas fa-percentage"></i>
+                <span>العمولات</span>
+            </a>
+            <a href="https://egymywire.com/logout" class="action-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>تسجيل الخروج</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <!-- Transactions Modal -->
+    <div class="modal" id="transactionsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="font-bold">المعاملات</h3>
+                <button class="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <h4 class="text-lg font-bold mb-2">لا توجد معاملات</h4>
+                <p class="text-gray-500">لم تقم بأي معاملات حتى الآن.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary px-4 py-2 rounded-md close-modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Modal -->
+    <div class="modal" id="statisticsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="font-bold">الإحصائيات</h3>
+                <button class="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h4 class="text-lg font-bold mb-2">لا توجد إحصائيات</h4>
+                <p class="text-gray-500">لا توجد بيانات إحصائية متاحة حالياً.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary px-4 py-2 rounded-md close-modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- My Tree Modal -->
+    <div class="modal" id="myTreeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="font-bold">شجرتي</h3>
+                <button class="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h4 class="text-lg font-bold mb-2">لا يوجد عملاء</h4>
+                <p class="text-gray-500">لا يوجد عملاء في شجرتك حالياً.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary px-4 py-2 rounded-md close-modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Advance Me Modal -->
+    <div class="modal" id="advanceMeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="font-bold">سلفني</h3>
+                <button class="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <h4 class="text-lg font-bold mb-2">غير مؤهل</h4>
+                <p class="text-gray-500">أنت غير مؤهل لاستخدام خدمة سلفني حالياً.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary px-4 py-2 rounded-md close-modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Deposits Modal -->
+    <div class="modal" id="depositsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="font-bold">الإيداعات</h3>
+                <button class="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <h4 class="text-lg font-bold mb-2">لا توجد إيداعات</h4>
+                <p class="text-gray-500">لم تقم بأي إيداعات حتى الآن.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary px-4 py-2 rounded-md close-modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- My Machine Modal -->
+    <div class="modal" id="myMachineModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="font-bold">ماكينتي</h3>
+                <button class="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <h4 class="text-lg font-bold mb-2">لا تملك ماكينة</h4>
+                <p class="text-gray-500">ليس لديك ماكينة دفع إلكتروني مسجلة باسمك حالياً.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary px-4 py-2 rounded-md close-modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Support Modal -->
+    <div class="modal" id="supportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="font-bold">الدعم الفني</h3>
+                <button class="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <h4 class="text-lg font-bold mb-2">تواصل مع الدعم الفني</h4>
+                <p class="text-gray-500">يمكنك التواصل مع فريق الدعم الفني على مدار الساعة للمساعدة في حل أي مشكلة.</p>
+            </div>
+            <div class="modal-footer">
+                <div class="flex gap-3">
+                    <button class="btn-primary px-4 py-2 rounded-md close-modal">إغلاق</button>
+                    <a href="#contact-support" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">اتصل بنا</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate and store serial number
+        function generateSerialNumber() {
+            if (!localStorage.getItem('serialNumber')) {
+                const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                let serial = '';
+                for (let i = 0; i < 16; i++) {
+                    serial += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                localStorage.setItem('serialNumber', serial);
+            }
+            document.getElementById('serialNumber').textContent = localStorage.getItem('serialNumber');
+        }
+        
+        // Modal functionality
+        function setupModals() {
+            // Open modals
+            document.getElementById('transactionsBtn').addEventListener('click', () => {
+                document.getElementById('transactionsModal').style.display = 'flex';
+            });
+            
+            document.getElementById('statisticsBtn').addEventListener('click', () => {
+                document.getElementById('statisticsModal').style.display = 'flex';
+            });
+            
+            document.getElementById('myTreeBtn').addEventListener('click', () => {
+                document.getElementById('myTreeModal').style.display = 'flex';
+            });
+            
+            document.getElementById('advanceMeBtn').addEventListener('click', () => {
+                document.getElementById('advanceMeModal').style.display = 'flex';
+            });
+            
+            document.getElementById('depositsBtn').addEventListener('click', () => {
+                document.getElementById('depositsModal').style.display = 'flex';
+            });
+            
+            document.getElementById('myMachineBtn').addEventListener('click', () => {
+                document.getElementById('myMachineModal').style.display = 'flex';
+            });
+            
+            document.getElementById('supportBtn').addEventListener('click', () => {
+                document.getElementById('supportModal').style.display = 'flex';
+            });
+            
+            // Close modals
+            const closeButtons = document.querySelectorAll('.close-modal');
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    modal.style.display = 'none';
+                });
+            });
+            
+            // Close modal when clicking outside
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Notification Panel Toggle
+        function setupNotifications() {
+            const notificationBtn = document.getElementById('notificationBtn');
+            const notificationPanel = document.getElementById('notificationPanel');
+            const closeNotifications = document.getElementById('closeNotifications');
+            
+            notificationBtn.addEventListener('click', () => {
+                notificationPanel.classList.add('active');
+            });
+            
+            closeNotifications.addEventListener('click', () => {
+                notificationPanel.classList.remove('active');
+            });
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            generateSerialNumber();
+            setupModals();
+            setupNotifications();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'948ee8a2a132e15c',t:'MTc0ODc4Mjk4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
